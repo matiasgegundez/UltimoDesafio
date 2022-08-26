@@ -37,7 +37,7 @@ namespace UltimoDesafio.Controllers
             }
         }
 
-        [HttpGet("/GetUsuarioPorNombreYContraseña", Name = "GetUsuarioByNameAndPassword")]
+        [HttpGet("/GetUsuarioPorNombreYContraseña", Name = "IniciarSesion")]
         public Usuario GetUsuarioPorNombreYContraseña(string nombre, string contraseña)
         {
             try
@@ -72,10 +72,14 @@ namespace UltimoDesafio.Controllers
             {
                 try
                 {
-                    return UsuarioHandler.ModificarNombreDeUsuario(new Usuario
+                    return UsuarioHandler.ModificarUsuario(new Usuario
                     {
                         Id = usuario.Id,
-                        Nombre = usuario.Nombre
+                        Nombre = usuario.Nombre,
+                        Apellido = usuario.Apellido,
+                        Contraseña = usuario.Contraseña,
+                        Mail = usuario.Mail,
+                        NombreUsuario = usuario.NombreUsuario 
                     });
                 }
                 catch (Exception ex)

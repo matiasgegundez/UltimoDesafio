@@ -57,6 +57,7 @@ namespace UltimoDesafio.Controllers
         {
             try
             {
+                ProductoVendidoHandler.EliminarProductosVendidosDeProductoId(id);
                 return ProductoHandler.EliminarProducto(id);
             }
             catch (Exception ex)
@@ -71,7 +72,7 @@ namespace UltimoDesafio.Controllers
         {
             try
             {
-                return ProductoHandler.ModificarUsuario(new Producto()
+                return ProductoHandler.ModificarProducto(new Producto()
                 {
                     Id = producto.Id,
                     Descripciones = producto.Descripciones,

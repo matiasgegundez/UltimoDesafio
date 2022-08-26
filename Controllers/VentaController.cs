@@ -28,6 +28,16 @@ namespace UltimoDesafio.Controllers
         {
             try
             {
+                var productosVendidos = ProductoVendidoHandler.GetProductosVendidosDeUnaVenta(id);
+                ProductoVendidoHandler.EliminarProductosVendidosDeVentaId(id);
+                if (productosVendidos.Count > 0)
+                {
+                    foreach (var producto in productosVendidos)
+                    {
+                        ProductoHandler.ActualizarProductoPorEliminacionDeVenta(producto.Stock, producto.Id);
+                    }
+                }
+
                 return VentaHandler.EliminarVenta(id);
             }
             catch (Exception ex)
@@ -55,19 +65,34 @@ namespace UltimoDesafio.Controllers
             }
         }
         [HttpPost(Name = "CreateVenta")]
-        public bool CrearVenta([FromBody] PostVenta venta)
+        public int CrearVenta([FromBody] PostVenta venta)
         {
             try
             {
-                return VentaHandler.CrearVenta(new Venta()
+                int idVenta = VentaHandler.CrearVenta(new Venta()
                 {
                     Comentarios = venta.Comentarios
                 });
+
+                foreach (var producto in venta.Productos)
+                {
+                    ProductoVendidoHandler.CrearProductoVendido(new ProductoVendido()
+                    {
+                        IdProducto = producto.IdProducto,
+                        IdVenta = idVenta,
+                        Stock = producto.Stock
+                    });
+
+                    ProductoHandler.ActualizarProductoPorVenta(producto.Stock, producto.IdProducto);
+                }
+
+                return idVenta;
+                
             }
             catch (Exception ex)
             {
                 Console.WriteLine(ex.Message);
-                return false;
+                return 0;
             }
         }
     }

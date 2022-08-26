@@ -6,13 +6,11 @@ namespace UltimoDesafio.Repository
 {
     public static class VentaHandler
     {
-        public const string ConnectionString = "Server=localhost;Database=SistemaGestion;Trusted_Connection=True;";
-
         public static List<Venta> GetVentas()
         {
-            List<Venta> resultados = new List<Venta>();
+            List<Venta> ventas = new List<Venta>();
 
-            using (SqlConnection sqlConnection = new SqlConnection(ConnectionString))
+            using (SqlConnection sqlConnection = new SqlConnection(DbHandler.GetConnectionString()))
             {
                 using (SqlCommand sqlCommand = new SqlCommand())
                 {
@@ -35,18 +33,25 @@ namespace UltimoDesafio.Repository
                         venta.Id = Convert.ToInt32(row["Id"]);
                         venta.Comentarios = row["Comentarios"].ToString();
 
-                        resultados.Add(venta);
+                        ventas.Add(venta);
                     }
                 }
             }
 
-            return resultados;
+            foreach(var venta in ventas)
+            {
+                var productos = ProductoVendidoHandler.TraerProductosVendidosDeUnaVenta(venta.Id);
+                venta.Productos = productos;
+            }
+
+
+            return ventas;
         }
 
         public static bool EliminarVenta(int id)
         {
             bool resultado = false;
-            using (SqlConnection sqlConnection = new SqlConnection(ConnectionString))
+            using (SqlConnection sqlConnection = new SqlConnection(DbHandler.GetConnectionString()))
             {
                 string queryDelete = "DELETE FROM Venta WHERE Id = @id";
                 SqlParameter sqlParameter = new SqlParameter("id", System.Data.SqlDbType.BigInt);
@@ -72,7 +77,7 @@ namespace UltimoDesafio.Repository
         public static bool ModificarVenta(Venta venta)
         {
             bool resultado = false;
-            using (SqlConnection sqlConnection = new SqlConnection(ConnectionString))
+            using (SqlConnection sqlConnection = new SqlConnection(DbHandler.GetConnectionString()))
             {
                 string queryInsert = "UPDATE Venta " +
                     "SET Comentarios = @comentariosParameter " +
@@ -100,35 +105,29 @@ namespace UltimoDesafio.Repository
             return resultado;
         }
 
-        public static bool CrearVenta(Venta venta)
+        public static int CrearVenta(Venta venta)
         {
-            bool resultado = false;
-            using (SqlConnection sqlConnection = new SqlConnection(ConnectionString))
+            int idVenta = 0;
+            using (SqlConnection sqlConnection = new SqlConnection(DbHandler.GetConnectionString()))
             {
                 string queryInsert = "INSERT INTO Venta " +
                     "(Comentarios) VALUES " +
-                    "(@comentariosParameter)";
+                    "(@comentariosParameter);" +
+                    "SELECT SCOPE_IDENTITY();";
 
                 SqlParameter comentariosParameter = new SqlParameter("comentariosParameter", System.Data.SqlDbType.VarChar) { Value = venta.Comentarios };
-                SqlParameter idParameter = new SqlParameter("idParameter", System.Data.SqlDbType.BigInt) { Value = venta.Id };
 
                 sqlConnection.Open();
 
                 using (SqlCommand sqlCommand = new SqlCommand(queryInsert, sqlConnection))
                 {
                     sqlCommand.Parameters.Add(comentariosParameter);
-                    sqlCommand.Parameters.Add(idParameter);
 
-                    int numberOfRows = sqlCommand.ExecuteNonQuery();
-
-                    if (numberOfRows > 0)
-                    {
-                        resultado = true;
-                    }
+                    idVenta = Convert.ToInt32(sqlCommand.ExecuteScalar());
                 }
                 sqlConnection.Close();
             }
-            return resultado;
+            return idVenta;
         }
     }
 }

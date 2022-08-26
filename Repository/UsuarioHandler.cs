@@ -7,13 +7,11 @@ namespace UltimoDesafio.Repository
 {
     public static class UsuarioHandler
     {
-        public const string ConnectionString = "Server=localhost;Database=SistemaGestion;Trusted_Connection=True;";
-
         public static List<Usuario> GetUsuarios()
         {
             List<Usuario> resultados = new List<Usuario>();
 
-            using (SqlConnection sqlConnection = new SqlConnection(ConnectionString))
+            using (SqlConnection sqlConnection = new SqlConnection(DbHandler.GetConnectionString()))
             {
                 using (SqlCommand sqlCommand = new SqlCommand("SELECT * FROM Usuario", sqlConnection))
                 {
@@ -48,9 +46,14 @@ namespace UltimoDesafio.Repository
         public static bool EliminarUsuario(int id)
         {
             bool resultado = false;
-            using (SqlConnection sqlConnection = new SqlConnection(ConnectionString))
+
+            ProductoVendidoHandler.EliminarProductosVendidosPorUsuario(id);
+            ProductoHandler.EliminarProductoPorUsuario(id);
+
+            using (SqlConnection sqlConnection = new SqlConnection(DbHandler.GetConnectionString()))
             {
-                string queryDelete = "DELETE FROM Usuario WHERE Id = @id";
+                string queryDelete = "DELETE FROM Usuario WHERE Id = @id; ";
+
                 SqlParameter sqlParameter = new SqlParameter("id", System.Data.SqlDbType.BigInt);
                 sqlParameter.Value = id;
 
@@ -60,28 +63,36 @@ namespace UltimoDesafio.Repository
                 {
                     sqlCommand.Parameters.Add(sqlParameter);
                     int numberOfRows = sqlCommand.ExecuteNonQuery();
-                    if(numberOfRows > 0)
+                    if (numberOfRows > 0)
                     {
                         resultado = true;
                     }
                 }
 
-              sqlConnection.Close();
+                sqlConnection.Close();
             }
             return resultado;
         }
 
-        public static bool ModificarNombreDeUsuario(Usuario usuario)
+        public static bool ModificarUsuario(Usuario usuario)
         {
             bool resultado = false;
-            using (SqlConnection sqlConnection = new SqlConnection(ConnectionString))
+            using (SqlConnection sqlConnection = new SqlConnection(DbHandler.GetConnectionString()))
             {
                 string queryInsert = "UPDATE Usuario " +
-                    "SET Nombre = @nombreParameter " +
-                    "WHERE Id = @idParameter";
+                    "SET Nombre = @nombreParameter, " +
+                    "Apellido = @apellidoParameter, " +
+                    "NombreUsuario = @nombreUsuarioParameter, " +
+                    "Contraseña = @contraseñaParameter, " +
+                    "Mail = @mailParameter " +
+                    "WHERE Id = @idParameter;";
 
                 SqlParameter nombreParameter = new SqlParameter("nombreParameter", System.Data.SqlDbType.VarChar) { Value = usuario.Nombre };
-              
+                SqlParameter apellidoParameter = new SqlParameter("apellidoParameter", System.Data.SqlDbType.VarChar) { Value = usuario.Apellido };
+                SqlParameter nombreUsuarioParameter = new SqlParameter("nombreUsuarioParameter", System.Data.SqlDbType.VarChar) { Value = usuario.NombreUsuario };
+                SqlParameter contraseñaParameter = new SqlParameter("contraseñaParameter", System.Data.SqlDbType.VarChar) { Value = usuario.Contraseña };
+                SqlParameter mailParameter = new SqlParameter("mailParameter", System.Data.SqlDbType.VarChar) { Value = usuario.Mail };
+
                 SqlParameter idParameter = new SqlParameter("idParameter", System.Data.SqlDbType.BigInt) { Value = usuario.Id };
 
                 sqlConnection.Open();
@@ -89,6 +100,10 @@ namespace UltimoDesafio.Repository
                 using (SqlCommand sqlCommand = new SqlCommand(queryInsert, sqlConnection))
                 {
                     sqlCommand.Parameters.Add(nombreParameter);
+                    sqlCommand.Parameters.Add(apellidoParameter);
+                    sqlCommand.Parameters.Add(nombreUsuarioParameter);
+                    sqlCommand.Parameters.Add(contraseñaParameter);
+                    sqlCommand.Parameters.Add(mailParameter);
                     sqlCommand.Parameters.Add(idParameter);
 
                     int numberOfRows = sqlCommand.ExecuteNonQuery();
@@ -107,44 +122,69 @@ namespace UltimoDesafio.Repository
         public static bool CrearUsuario(Usuario postUsuario)
         {
             bool resultado = false;
-            using (SqlConnection sqlConnection = new SqlConnection(ConnectionString))
+            var userIsValid = ValidarCamposObligatorios(postUsuario);
+
+            if(userIsValid)
             {
-                string queryInsert = "INSERT INTO Usuario " +
-                    "(Nombre, Apellido, NombreUsuario, Contraseña, Mail) VALUES " +
-                    "(@nombreParameter, @apellidoParameter, @nombreUsuarioParameter, @contraseñaParameter, @mailParameter )";
-
-                SqlParameter nombreParameter = new SqlParameter("nombreParameter", System.Data.SqlDbType.VarChar) { Value = postUsuario.Nombre };
-                SqlParameter apellidoParameter = new SqlParameter("apellidoParameter", System.Data.SqlDbType.VarChar) { Value = postUsuario.Apellido };
-                SqlParameter nombreUsuarioParameter = new SqlParameter("nombreUsuarioParameter", System.Data.SqlDbType.VarChar) { Value = postUsuario.NombreUsuario };
-                SqlParameter contraseñaParameter = new SqlParameter("contraseñaParameter", System.Data.SqlDbType.VarChar) { Value = postUsuario.Contraseña };
-                SqlParameter mailParameter = new SqlParameter("mailParameter", System.Data.SqlDbType.VarChar) { Value = postUsuario.Mail };
-
-                sqlConnection.Open();
-
-                using (SqlCommand sqlCommand = new SqlCommand(queryInsert, sqlConnection))
+                using (SqlConnection sqlConnection = new SqlConnection(DbHandler.GetConnectionString()))
                 {
-                    sqlCommand.Parameters.Add(nombreParameter);
-                    sqlCommand.Parameters.Add(apellidoParameter);
-                    sqlCommand.Parameters.Add(nombreUsuarioParameter);
-                    sqlCommand.Parameters.Add(contraseñaParameter);
-                    sqlCommand.Parameters.Add(mailParameter);
+                    string queryInsert = "INSERT INTO Usuario " +
+                        "(Nombre, Apellido, NombreUsuario, Contraseña, Mail) VALUES " +
+                        "(@nombreParameter, @apellidoParameter, @nombreUsuarioParameter, @contraseñaParameter, @mailParameter )";
 
-                    int numberOfRows = sqlCommand.ExecuteNonQuery();
+                    SqlParameter nombreParameter = new SqlParameter("nombreParameter", System.Data.SqlDbType.VarChar) { Value = postUsuario.Nombre };
+                    SqlParameter apellidoParameter = new SqlParameter("apellidoParameter", System.Data.SqlDbType.VarChar) { Value = postUsuario.Apellido };
+                    SqlParameter nombreUsuarioParameter = new SqlParameter("nombreUsuarioParameter", System.Data.SqlDbType.VarChar) { Value = postUsuario.NombreUsuario };
+                    SqlParameter contraseñaParameter = new SqlParameter("contraseñaParameter", System.Data.SqlDbType.VarChar) { Value = postUsuario.Contraseña };
+                    SqlParameter mailParameter = new SqlParameter("mailParameter", System.Data.SqlDbType.VarChar) { Value = postUsuario.Mail };
 
-                    if (numberOfRows > 0)
+                    sqlConnection.Open();
+
+                    using (SqlCommand sqlCommand = new SqlCommand(queryInsert, sqlConnection))
                     {
-                        resultado = true;
+                        sqlCommand.Parameters.Add(nombreParameter);
+                        sqlCommand.Parameters.Add(apellidoParameter);
+                        sqlCommand.Parameters.Add(nombreUsuarioParameter);
+                        sqlCommand.Parameters.Add(contraseñaParameter);
+                        sqlCommand.Parameters.Add(mailParameter);
+
+                        int numberOfRows = sqlCommand.ExecuteNonQuery();
+
+                        if (numberOfRows > 0)
+                        {
+                            resultado = true;
+                        }
                     }
+                    sqlConnection.Close();
                 }
-                sqlConnection.Close();
             }
             return resultado;
+        }
+
+        private static bool ValidarCamposObligatorios(Usuario postUsuario)
+        {
+            var nombreExistente = TraerUsuarioPorNombre(postUsuario.NombreUsuario);
+            if (nombreExistente != null)
+            {
+                return false;
+            }
+
+            if (string.IsNullOrEmpty(postUsuario.Contraseña) 
+                || string.IsNullOrEmpty(postUsuario.Mail) 
+                || string.IsNullOrEmpty(postUsuario.NombreUsuario) 
+                || string.IsNullOrEmpty(postUsuario.Nombre) 
+                || string.IsNullOrEmpty(postUsuario.Apellido))
+            {
+                return false;
+            }
+
+            return true;
         }
 
         public static Usuario TraerUsuarioPorNombre(string nombreUsuario)
         {
             List<Usuario> usuarios = new List<Usuario>();
-            using (SqlConnection sqlConnection = new SqlConnection(ConnectionString))
+            using (SqlConnection sqlConnection = new SqlConnection(DbHandler.GetConnectionString()))
             {
                 using (SqlCommand sqlCommand = new SqlCommand())
                 {
@@ -179,7 +219,7 @@ namespace UltimoDesafio.Repository
         public static Usuario BuscarUsuarioPorUsuarioYContraseña(string nombreUsuario, string contraseña)
         {
             List<Usuario> usuarios = new List<Usuario>();
-            using (SqlConnection sqlConnection = new SqlConnection(ConnectionString))
+            using (SqlConnection sqlConnection = new SqlConnection(DbHandler.GetConnectionString()))
             {
                 using (SqlCommand sqlCommand = new SqlCommand())
                 {

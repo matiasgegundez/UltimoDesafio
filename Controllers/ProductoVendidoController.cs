@@ -9,6 +9,20 @@ namespace UltimoDesafio.Controllers
     [Route("[controller]")]
     public class ProductoVendidoController : ControllerBase
     {
+        [HttpGet("/GetProductoVendidoDeUsuario", Name = "GetProductoVendidoByUser")]
+        public List<Producto> GetProductoVendidoPorUsuario(int userId)
+        {
+            try
+            {
+                return ProductoVendidoHandler.TraerProductosVendidosDeUnUsuario(userId);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                return new List<Producto>();
+            }
+        }
+
         [HttpGet(Name = "GetProductoVendido")]
         public List<ProductoVendido> GetProductoVendido()
         {
@@ -24,7 +38,7 @@ namespace UltimoDesafio.Controllers
         }
 
         [HttpDelete(Name = "DeleteProductoVendido")]
-        public bool EliminarUsuario([FromBody] int id)
+        public bool EliminarProductoVendido([FromBody] int id)
         {
             try
             {
@@ -37,9 +51,8 @@ namespace UltimoDesafio.Controllers
             }
         }
 
-
         [HttpPut(Name = "UpdateProductoVendido")]
-        public bool ModificarUsuario([FromBody] PutProductoVendido productoVendido)
+        public bool ModificarProductoVendido([FromBody] PutProductoVendido productoVendido)
         {
             {
                 try

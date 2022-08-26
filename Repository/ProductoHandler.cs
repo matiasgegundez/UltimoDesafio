@@ -7,13 +7,11 @@ namespace UltimoDesafio.Repository
 {
     public static class ProductoHandler
     {
-        public const string ConnectionString = "Server=localhost;Database=SistemaGestion;Trusted_Connection=True;";
-
         public static List<Producto> GetProducto()
         {
             List<Producto> resultados = new List<Producto>();
 
-            using (SqlConnection sqlConnection = new SqlConnection(ConnectionString))
+            using (SqlConnection sqlConnection = new SqlConnection(DbHandler.GetConnectionString()))
             {
                 using (SqlCommand sqlCommand = new SqlCommand())
                 {
@@ -51,7 +49,7 @@ namespace UltimoDesafio.Repository
         public static bool CrearProducto(Producto producto)
         {
             bool resultado = false;
-            using (SqlConnection sqlConnection = new SqlConnection(ConnectionString))
+            using (SqlConnection sqlConnection = new SqlConnection(DbHandler.GetConnectionString()))
             {
                 string queryInsert = "INSERT INTO Producto " +
                     "(Descripciones, Costo, PrecioVenta, Stock, IdUsuario) VALUES " +
@@ -85,10 +83,10 @@ namespace UltimoDesafio.Repository
             return resultado;
         }
 
-        public static bool ModificarUsuario(Producto producto)
+        public static bool ModificarProducto(Producto producto)
         {
             bool resultado = false;
-            using (SqlConnection sqlConnection = new SqlConnection(ConnectionString))
+            using (SqlConnection sqlConnection = new SqlConnection(DbHandler.GetConnectionString()))
             {
                 string queryInsert = "UPDATE Producto " +
                     "SET Descripciones = @descripcionesParameter, " +
@@ -131,7 +129,7 @@ namespace UltimoDesafio.Repository
         public static bool EliminarProducto(int id)
         {
             bool resultado = false;
-            using (SqlConnection sqlConnection = new SqlConnection(ConnectionString))
+            using (SqlConnection sqlConnection = new SqlConnection(DbHandler.GetConnectionString()))
             {
                 string queryDelete = "DELETE FROM Producto WHERE Id = @id";
                 SqlParameter sqlParameter = new SqlParameter("id", System.Data.SqlDbType.BigInt);
@@ -154,10 +152,37 @@ namespace UltimoDesafio.Repository
             return resultado;
         }
 
+        public static bool EliminarProductoPorUsuario(int idUsuario)
+        {
+            bool resultado = false;
+            using (SqlConnection sqlConnection = new SqlConnection(DbHandler.GetConnectionString()))
+            {
+                string queryDelete = "DELETE from Producto where IdUsuario = @id;";
+                SqlParameter sqlParameter = new SqlParameter("id", System.Data.SqlDbType.BigInt);
+                sqlParameter.Value = idUsuario;
+
+                sqlConnection.Open();
+
+
+                using (SqlCommand sqlCommand = new SqlCommand(queryDelete, sqlConnection))
+                {
+                    sqlCommand.Parameters.Add(sqlParameter);
+                    int numberOfRows = sqlCommand.ExecuteNonQuery();
+                    if (numberOfRows > 0)
+                    {
+                        resultado = true;
+                    }
+                }
+
+                sqlConnection.Close();
+            }
+            return resultado;
+        }
+
         public static List<Producto> TraerProductosPorIdUsuario(int IdUsuario)
         {
             List<Producto> productos = new List<Producto>();
-            using (SqlConnection sqlConnection = new SqlConnection(ConnectionString))
+            using (SqlConnection sqlConnection = new SqlConnection(DbHandler.GetConnectionString()))
             {
                 using (SqlCommand sqlCommand = new SqlCommand())
                 {
@@ -192,7 +217,7 @@ namespace UltimoDesafio.Repository
         public static Producto GetById(int id)
         {
             List<Producto> productos = new List<Producto>();
-            using (SqlConnection sqlConnection = new SqlConnection(ConnectionString))
+            using (SqlConnection sqlConnection = new SqlConnection(DbHandler.GetConnectionString()))
             {
                 using (SqlCommand sqlCommand = new SqlCommand())
                 {
@@ -223,6 +248,25 @@ namespace UltimoDesafio.Repository
             }
 
             return productos?.FirstOrDefault();
+        }
+
+        public static bool ActualizarProductoPorVenta(int stock, int idProducto)
+        {
+            var producto = ProductoHandler.GetById(idProducto);
+
+            producto.Stock = producto.Stock - stock;
+
+            return ProductoHandler.ModificarProducto(producto);
+        }
+
+        public static bool ActualizarProductoPorEliminacionDeVenta(int stock, int idProducto)
+        {
+            var producto = ProductoHandler.GetById(idProducto);
+
+            producto.Stock = producto.Stock + stock;
+
+            return ProductoHandler.ModificarProducto(producto);
+
         }
     }
 }
